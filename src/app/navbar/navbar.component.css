@@ -1,0 +1,44 @@
+/* change the link color */
+.navbar-custom .navbar-nav .nav-link {
+    display: block;
+    position: relative;
+    color: #413e66;
+    padding: 10px 15px;
+    transition: 0.3s;
+    font-size: 16px;
+    text-transform: uppercase;
+    font-weight: 400;
+}
+
+/* change the color of active or hovered links */
+.navbar-custom .nav-item.active .nav-link,
+.navbar-custom .nav-item:hover .nav-link {
+    color: #0a98c0;
+    outline: none;
+    text-decoration: none;
+}
+.card {
+    background: #f5f8fd;
+    border-radius: 2px;
+    display: inline-block;
+    
+    margin: 1rem;
+    position: relative;
+
+  }
+  
+.card-1 {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  }
+  
+  .card-1:hover {
+    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  }
+  .navbar .navbar-brand {
+    padding-top: 25px;
+  }
+  .navbar .navbar-brand img {
+   
+    width: 500px;
+  }

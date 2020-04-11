@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
-  "version": 1, 
+  "version": 1,
   "newProjectRoot": "projects",
   "projects": {
     "WebELS": {
@@ -25,12 +25,14 @@
             "aot": true,
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              "src/manifest.webmanifest"
             ],
-            "styles": [
-              "src/styles.sass"
+            "styles": [              "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "src/assets/js/loader.js"
+            ]
           },
           "configurations": {
             "production": {
@@ -59,7 +61,9 @@
                   "maximumWarning": "6kb",
                   "maximumError": "10kb"
                 }
-              ]
+              ],
+              "serviceWorker": true,
+              "ngswConfigPath": "ngsw-config.json"
             }
           }
         },
@@ -89,12 +93,16 @@
             "karmaConfig": "karma.conf.js",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              "src/manifest.webmanifest"
             ],
             "styles": [
-              "src/styles.sass"
+
+              "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "src/assets/js/loader.js"
+            ]
           }
         },
         "lint": {
@@ -123,6 +131,10 @@
           }
         }
       }
-    }},
-  "defaultProject": "WebELS"
+    }
+  },
+  "defaultProject": "WebELS",
+  "cli": {
+    "analytics": "634976e2-1046-4dd1-938f-86cbeb6d8e03"
+  }
 }
