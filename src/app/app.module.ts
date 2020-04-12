@@ -58,7 +58,7 @@ import { LmpChartComponent } from './lmp-chart/lmp-chart.component';
         runGuardsAndResolvers: 'always',
         children: [
           {
-            path: 'app-iso-charts/app-lmpchart',
+            path: 'app-iso-charts/app-lmp-chart',
             component: LmpChartComponent,
           },
           {
