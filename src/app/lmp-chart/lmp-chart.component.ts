@@ -41,51 +41,80 @@ export class LmpChartComponent implements OnInit {
     });
   }
   private options = {
+    enableInteractivity: true,
     series: {
       0: {
         seriesType: 'line',
-        color: 'black',
+        
       }
     },
-
-    vAxis: { title: '$/MwH', textStyle: { fontSize: '12' }, format: 'short' },
-    hAxis: { textStyle: { fontSize: '12' }, format: 'MMMM d' },
-    colors: ['black'],
     legend: {
-      position: 'none'
+      position: 'top', alignment: 'end'
     },
-
     titleTextStyle: {
       color: 'black',    // any HTML string color ('red', '#cc00cc')
-      fontName: 'Open Sans', // i.e. 'Times New Roman'
-      fontSize: '18', // 12, 18 whatever you want (don't specify px)
+      fontName: 'Montesserat', // i.e. 'Times New Roman'
+      fontSize: '24', // 12, 18 whatever you want (don't specify px)
       bold: false,    // true or false
       italic: true,   // true of false
     },
-    chartArea: { width: '80%', height: '70%' },
+    chartArea: { width: '80%', height: '80%' },
     crosshair: { trigger: 'both' },
     curveType: 'function',
     lineWidth: 1,
-    lineColor: 'black',
-
-  };
+    vAxis: { title: '$/MwH', textStyle: { fontSize: '12' }, format: 'currency' },
+    hAxis: {
+      textStyle: {
+        fontSize: '12'
+      },
+      gridlines: {
+        count: -1,
+        units: {
+          days: { format: ['MMM dd'] },
+          hours: { format: ['HH:mm', 'ha'] },
+        }
+      },
+      minorGridlines: {
+        units: {
+          hours: { format: ['hh:mm:ss a', 'ha'] },
+          minutes: { format: ['HH:mm a Z', ':mm'] }
+        }
+      },
+   
+    },
+  }
   setFilterOptions() {
     this.controlOptions = {
       // Filter by the date axis.
       'filterColumnIndex': 0,
       ui: {
         'chartType': 'lineChart',
-
+        'opacity': '0',
+        
         'chartOptions': {
-          chartArea: { width: '80%', height: '90%' },
-          hAxis: { textStyle: { fontSize: '12' }, format: 'MMMM d' },
-          'color': 'black',
-          'lineWidth': '1',
-          opacity: 1,
+          
+          chartArea: { width: '80%', height: '100%' },
+          hAxis: {
+            textStyle: {
+              fontSize: '14'
+            },
+            gridlines: {
+              count: -1,
+              units: {
+                days: { format: ['MMM dd'] },
+                hours: { format: ['HH:mm', 'ha'] },
+              }
+            },
+            minorGridlines: {
+              units: {
+                hours: { format: ['hh:mm:ss a', 'ha'] },
+                minutes: { format: ['HH:mm a Z', ':mm'] }
+              }
+            }
+          }
         },
-      },
-
-      //     'state': { 'range': { 'start': this.minMaxDate.MinDate, 'end': this.minMaxDate.MaxDate } }
+       
+      }
     }
   }
 
@@ -111,10 +140,10 @@ export class LmpChartComponent implements OnInit {
 
   setConditionalFormat(day: number, chartRow: Array<Date | number | string | Boolean>): Array<Date | number | string | Boolean> {
     if (day > 0 && day < 6) {
-      chartRow.push('color: red;');
+      chartRow.push('opacity:.7');
       chartRow.push(true);
     } else {
-      chartRow.push('color: black;');
+      chartRow.push('opacity:.2');
       chartRow.push(false);
     }
     return chartRow;
@@ -125,7 +154,7 @@ export class LmpChartComponent implements OnInit {
     // Create the dataset (DataTable)
     this.LmpTable = new this.gLib.visualization.DataTable();
     this.LmpTable.addColumn('date', 'Date');
-    this.LmpTable.addColumn('number', 'Lmp');
+    this.LmpTable.addColumn('number', 'LMP');
     this.LmpTable.addColumn({ type: 'string', role: 'style' });
     this.LmpTable.addColumn({ type: 'boolean', role: 'certainty' });
 
@@ -134,6 +163,8 @@ export class LmpChartComponent implements OnInit {
       const date = new Date(this.chartData[i].timestamp);
 
       chartRow.push(date);
+      if (this.chartData[i].fiveMinuteAvgLMP > 100)
+        this.chartData[i].fiveMinuteAvgLMP = 100;
       chartRow.push(this.chartData[i].fiveMinuteAvgLMP);
 
       const day = date.getDay();
@@ -141,7 +172,11 @@ export class LmpChartComponent implements OnInit {
 
       this.LmpTable.addRow(chartRow);
     }
-    this.chartTitle = 'LMP Data as of ' + new Date(this.chartData[this.chartData.length - 1].timestamp).toLocaleTimeString() + ' (EST)';
+    this.chartTitle = 'PSEG Zone LMP at 5 minute intervals. Last Reading at ' + new Date(this.chartData[this.chartData.length - 1].timestamp).toLocaleTimeString() + ' (EST)';
+
+    let MaxDt = new Date(this.chartData[this.chartData.length - 1].timestamp);
+    let MinDt = new Date(MaxDt);
+    MinDt.setDate(MaxDt.getDate() - 1);
 
     this.minMaxDate = this.miscSvc.GetMinMaxdate(this.chartData);
     // Create a dashboard.
@@ -153,6 +188,7 @@ export class LmpChartComponent implements OnInit {
     this.LmpDateSlider = new this.gLib.visualization.ControlWrapper({
       'controlType': 'ChartRangeFilter',
       'containerId': 'LMPcontrol_div',
+      'state': { 'range': { 'start': MinDt, 'end': MaxDt } }
     });
     this.setFilterOptions();
     this.LmpDateSlider.setOptions(this.controlOptions);
@@ -176,7 +212,7 @@ export class LmpChartComponent implements OnInit {
 
   private updateLmpChart(data: lmpTblRow) {
     this.chartData.push(data);
-    this.chartTitle = 'LMP Data as of ' + new Date(data.timestamp).toLocaleTimeString('en-US') + ' (EST)';
+    this.chartTitle = 'PSEG Zone LMP at 5 minute intervals. Last Reading at ' + new Date(this.chartData[this.chartData.length - 1].timestamp).toLocaleTimeString() + ' (EST)';
 
     let chartRow = new Array<Date | number | string | Boolean>();
     const date = new Date(data.timestamp);

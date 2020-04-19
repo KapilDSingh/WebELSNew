@@ -9,6 +9,7 @@ import { APP_BASE_HREF } from '@angular/common';
 import { environment } from '../environments/environment';
 
 import { AngularResizedEventModule } from 'angular-resize-event';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 
 import { SignalrISOdataService } from './services/signalr-ISOdata.service';
 import { LoadService } from './services/load.service';
@@ -27,6 +28,11 @@ import { GoogleChartService } from './services/google-chart.service';
 import { LmpResolverService } from './services/lmp-resolver.service';
 import { LmpService } from './services/lmp.service';
 import { LmpChartComponent } from './lmp-chart/lmp-chart.component';
+import { GenMixComponent } from './gen-mix/gen-mix.component';
+import { GenmixResolverService } from './services/genmix-resolver.service';
+import { MeterResolverService } from './services/meter-resolver.service';
+import { MeterChartsComponent } from './meter-charts/meter-charts.component';
+import { KwChartComponent } from './kw-chart/kw-chart.component';
 
 
 @NgModule({
@@ -40,6 +46,9 @@ import { LmpChartComponent } from './lmp-chart/lmp-chart.component';
     
     IsoChartsComponent,
     LmpChartComponent,
+    GenMixComponent,
+    MeterChartsComponent,
+    KwChartComponent,
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
@@ -53,8 +62,8 @@ import { LmpChartComponent } from './lmp-chart/lmp-chart.component';
 
       {
         path: 'app-iso-charts', component: IsoChartsComponent,
-        resolve: { LmpData: LmpResolverService, LoadData: LoadResolverService  },
-       
+        resolve: { LmpData: LmpResolverService, LoadData: LoadResolverService, GenmixData: GenmixResolverService},
+
         runGuardsAndResolvers: 'always',
         children: [
           {
@@ -62,13 +71,27 @@ import { LmpChartComponent } from './lmp-chart/lmp-chart.component';
             component: LmpChartComponent,
           },
           {
-            
             path: 'app-iso-charts/app-load-chart',
             component: LoadChartComponent,
+          },
+          {
+            path: 'app-iso-charts/app-gen-mix',
+            component: GenMixComponent,
           }
         ]
       },
+      {
+        path: 'app-meter-charts', component: MeterChartsComponent,
+        resolve: { MeterData: MeterResolverService },
 
+        runGuardsAndResolvers: 'always',
+        children: [
+          {
+            path: 'app-meter-charts/app-kw-chart',
+            component: KwChartComponent,
+          },
+        ]
+      },
       { path: 'app-intro', component: IntroComponent },
 
       { path: '', redirectTo: '/home', pathMatch: 'full' }

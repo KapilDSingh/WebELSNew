@@ -13,9 +13,9 @@ export class SignalrISOdataService implements OnInit  {
 
   LoadmessageReceived = new EventEmitter<loadTblRow>();
 
-  GenmixmessageReceived = new EventEmitter<Array<fuelTypeData>>();
+  GenmixmessageReceived = new EventEmitter<fuelTypeData>();
 
-  MeterDataMessageReceived = new EventEmitter<Array<MeterData>>();
+  MeterKWDataMessageReceived = new EventEmitter<MeterData>();
 
   public connectionIsEstablished = false;
   public _hubConnection: HubConnection;
@@ -24,13 +24,6 @@ export class SignalrISOdataService implements OnInit  {
     this.createConnection();
     this.registerOnServerEvents();
     this.startConnection();
-  }
-
-  public sendfuelTypeData(n: any) {
-    this._hubConnection.invoke('SendGenmix', n);
-  }
-  public SendMeterData(n: any, MeterId: string) {
-    this._hubConnection.invoke('SendMeterData', n, '550001081');
   }
 
   private createConnection() {
@@ -65,8 +58,8 @@ export class SignalrISOdataService implements OnInit  {
       this.GenmixmessageReceived.emit(data);
     });
 
-    this._hubConnection.on('ReceiveMeterData', (data: any) => {
-      this.MeterDataMessageReceived.emit(data);
+    this._hubConnection.on('ReceiveMeterKWData', (data: any) => {
+      this.MeterKWDataMessageReceived.emit(data);
     });
   }
   ngOnInit(): void {

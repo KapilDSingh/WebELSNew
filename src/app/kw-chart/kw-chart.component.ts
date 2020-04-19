@@ -1,10 +1,10 @@
 import { Component, OnInit, ViewChild, Input, OnChanges, SimpleChanges, NgZone } from '@angular/core';
 import { GoogleChartService } from '../services/google-chart.service';
 import { Router, ActivatedRoute, RouterEvent, NavigationEnd } from '@angular/router';
-import { loadTblRow } from '../Models/IsoModels';
+import { MeterData } from '../Models/MeterModel';
 import { DatePipe } from '@angular/common';
 import { MinMaxDate } from '../Models/MiscModels';
-import { LoadService } from '../services/load.service';
+import { MeterService } from '../services/meter.service';
 import { SignalrISOdataService } from '../services/signalr-ISOdata.service';
 import { MiscService } from '../services/misc.service';
 import { NONE_TYPE } from '@angular/compiler/src/output/output_ast';
@@ -14,20 +14,20 @@ import { Subject } from 'rxjs';
 
 
 @Component({
-  selector: 'app-load-chart',
-  templateUrl: './load-chart.component.html',
-  styleUrls: ['./load-chart.component.css']
+  selector: 'app-kw-chart',
+  templateUrl: './kw-chart.component.html',
+  styleUrls: ['./kw-chart.component.scss']
 })
-export class LoadChartComponent implements OnInit {
+export class KwChartComponent implements OnInit {
 
   public destroyed = new Subject<any>();
   private gLib: any;
   private minMaxDate: MinMaxDate;
-  private loadTable: any;
-  private loadDashboard: any;
+  private meterKWTable: any;
+  private meterKWDashboard: any;
   private chartTitle: string;
-  private loadLine: any;
-  private loadDateSlider: any;
+  private meterKWLine: any;
+  private meterKWDateSlider: any;
   private width: number;
   private height: number;
   private controlOptions: any;
@@ -36,15 +36,15 @@ export class LoadChartComponent implements OnInit {
     private signalrService: SignalrISOdataService, private _ngZone: NgZone, private miscSvc: MiscService) {
     this.gLib = this.gChartService.getGoogle();
     this.gLib.charts.load('current', { 'packages': ['corechart', 'table', 'controls'] });
-    this.gLib.charts.setOnLoadCallback(this.drawLoadChart.bind(this));
+    this.gLib.charts.setOnLoadCallback(this.drawMeterKWChart.bind(this));
     route.params.pipe(
       takeUntil(this.destroyed)
     ).subscribe(val => {
-      this.chartData = this.route.snapshot.data.LoadData;
+      this.chartData = this.route.snapshot.data.MeterData;
     });
   }
 
-  private chartData = new Array<loadTblRow>();
+  private chartData = new Array<MeterData>();
 
   private options = {
     enableInteractivity: true,
@@ -65,7 +65,7 @@ export class LoadChartComponent implements OnInit {
     crosshair: { trigger: 'both' },
     curveType: 'function',
     lineWidth: 1,
-    vAxis: { title: 'MW', textStyle: { fontSize: '12' }, format: 'short' },
+    vAxis: { title: 'KW', textStyle: { fontSize: '12' }, format: 'short' },
     hAxis: {
       textStyle: {
         fontSize: '12'
@@ -113,30 +113,28 @@ export class LoadChartComponent implements OnInit {
             }
           }
         },
-
       }
-
 
     }
   }
 
   ngOnInit() {
-    this.chartData = this.route.snapshot.data.LoadData;
+    this.chartData = this.route.snapshot.data.MeterData;
 
-    this.signalrService.LoadmessageReceived
+    this.signalrService.MeterKWDataMessageReceived
       .pipe(takeUntil(this.destroyed))
       .subscribe((data) => {
         this._ngZone.run(() => {
-          this.updateLoadChart(data);
+          this.updateMeterKWChart(data);
         });
       });
   }
   formatAxes() {
     const date_formatter = new this.gLib.visualization.DateFormat({ pattern: 'MMM dd, yyyy,  h:mm aa' });
-    date_formatter.format(this.loadTable, 0);  // Where 0 is the index of the column
+    date_formatter.format(this.meterKWTable, 0);  // Where 0 is the index of the column
 
-    const formatter = new this.gLib.visualization.NumberFormat({ suffix: ' MW', pattern: '#,###' });
-    formatter.format(this.loadTable, 1); // Apply formatter to second column
+    const formatter = new this.gLib.visualization.NumberFormat({ suffix: ' KW', pattern: '#,###' });
+    formatter.format(this.meterKWTable, 1); // Apply formatter to second column
   }
 
 
@@ -152,80 +150,80 @@ export class LoadChartComponent implements OnInit {
   }
 
 
-  private drawLoadChart(options) {
+  private drawMeterKWChart(options) {
     // Create the dataset (DataTable)
-    this.loadTable = new this.gLib.visualization.DataTable();
-    this.loadTable.addColumn('date', 'Date');
-    this.loadTable.addColumn('number', 'Load Weekdays');
-    this.loadTable.addColumn({ type: 'string', role: 'style' });
-    this.loadTable.addColumn({ type: 'boolean', role: 'certainty' });
+    this.meterKWTable = new this.gLib.visualization.DataTable();
+    this.meterKWTable.addColumn('date', 'Date');
+    this.meterKWTable.addColumn('number', 'KW Weekdays');
+    this.meterKWTable.addColumn({ type: 'string', role: 'style' });
+    this.meterKWTable.addColumn({ type: 'boolean', role: 'certainty' });
 
     for (let i = 0; i < this.chartData.length; i++) {
       let chartRow = new Array<Date | number | string | Boolean>();
       const date = new Date(this.chartData[i].timestamp);
 
       chartRow.push(date);
-      chartRow.push(this.chartData[i].instantaneous_Load);
+      chartRow.push(this.chartData[i].rms_Watts_Tot*10/1000);
 
       const day = date.getDay();
       chartRow = this.setConditionalFormat(day, chartRow);
 
-      this.loadTable.addRow(chartRow);
+      this.meterKWTable.addRow(chartRow);
     }
-    this.chartTitle = 'PJM RTO Load at 5 minute intervals. Last Reading at ' + new Date(this.chartData[this.chartData.length - 1].timestamp).toLocaleTimeString() + ' (EST)';
+    this.chartTitle = 'Rate of Electricity Use (KW) at minute intervals. Last Reading at ' + new Date(this.chartData[this.chartData.length - 1].timestamp).toLocaleTimeString() + ' (EST)';
 
     let MaxDt = new Date(this.chartData[this.chartData.length - 1].timestamp);
     let MinDt = new Date(MaxDt);
     MinDt.setDate(MaxDt.getDate() - 1);
 
     // Create a dashboard.
-    const dash_container = document.getElementById('dashboard_div');
+    const dash_container = document.getElementById('MeterKWdashboard_div');
 
-    this.loadDashboard = new this.gLib.visualization.Dashboard(dash_container);
+    this.meterKWDashboard = new this.gLib.visualization.Dashboard(dash_container);
 
     // Create a date range slider
-    this.loadDateSlider = new this.gLib.visualization.ControlWrapper({
+    this.meterKWDateSlider = new this.gLib.visualization.ControlWrapper({
       'controlType': 'ChartRangeFilter',
-      'containerId': 'control_div',
+      'containerId': 'MeterKWcontrol_div',
       'state': { 'range': { 'start': MinDt, 'end': MaxDt } }
     });
     this.setFilterOptions();
-    this.loadDateSlider.setOptions(this.controlOptions);
+    this.meterKWDateSlider.setOptions(this.controlOptions);
 
     this.formatAxes();
 
     // Line chart visualization
-    this.loadLine = new this.gLib.visualization.ChartWrapper({
+    this.meterKWLine = new this.gLib.visualization.ChartWrapper({
       'chartType': 'ComboChart',
-      'containerId': 'line_div',
+      'containerId': 'MeterKWline_div',
 
       'options': this.options,
     });
-    this.loadLine.setOption('title', this.chartTitle);
-    // Bind loadLine to the dashboard, and to the controls
+    this.meterKWLine.setOption('title', this.chartTitle);
+    // Bind meterKWLine to the dashboard, and to the controls
     // this will make sure our line chart is updated when our date changes
-    this.loadDashboard.bind(this.loadDateSlider, this.loadLine);
+    this.meterKWDashboard.bind(this.meterKWDateSlider, this.meterKWLine);
 
-    this.loadDashboard.draw(this.loadTable);
+    this.meterKWDashboard.draw(this.meterKWTable);
   }
 
-  private updateLoadChart(data: loadTblRow) {
+  private updateMeterKWChart(data: MeterData) {
     this.chartData.push(data);
-    this.chartTitle = 'PJM RTO Load at 5 minute intervals. Last Reading at ' + new Date(this.chartData[this.chartData.length - 1].timestamp).toLocaleTimeString() + ' (EST)';
+    this.chartTitle = 'Rate of Electricity Use (KW) at minute intervals. Last Reading at ' + new Date(this.chartData[this.chartData.length - 1].timestamp).toLocaleTimeString() + ' (EST)';
 
     let chartRow = new Array<Date | number | string | Boolean>();
     const date = new Date(data.timestamp);
     chartRow.push(date);
-    chartRow.push(data.instantaneous_Load);
+    chartRow.push(data.rms_Watts_Tot*10/1000);
     const day = date.getDay();
 
-    if (this.loadDashboard != undefined) {
+    if (this.meterKWDashboard != undefined) {
       chartRow = this.setConditionalFormat(day, chartRow);
-      this.loadTable.addRow(chartRow);
-      this.loadLine.setOption('title', this.chartTitle);
+      this.meterKWTable.addRow(chartRow);
+      this.meterKWLine.setOption('title', this.chartTitle);
 
       this.formatAxes();
-      this.loadDashboard.draw(this.loadTable);
+      this.meterKWDashboard.draw(this.meterKWTable);
     }
   }
   onResized(event: ResizedEvent) {
@@ -236,9 +234,9 @@ export class LoadChartComponent implements OnInit {
     console.log('width', this.width);
     console.log('height', this.height);
 
-    if (this.loadLine != undefined) {
-      this.loadLine.draw();
-      this.loadDateSlider.draw();
+    if (this.meterKWLine != undefined) {
+      this.meterKWLine.draw();
+      this.meterKWDateSlider.draw();
     }
   }
   ngOnDestroy(): void {
